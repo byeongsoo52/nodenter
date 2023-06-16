@@ -1,15 +1,24 @@
-// Router를 만든다
 // Router.METHOD(PATH, HANDLER)
 
 // 스키마를 선언한 comments 스키마를 가지고와서 Comments 변수에 할당
 
-const Comments = require("../schemas/comments");
+const express = require("express")
+const router = express.Router();
 
-// 상품 목록 조회 API
-// router.get("/comments", (req, res) => {
-//   res.json({ comments: comments })
-// })
+//코멘트 목록 조회 API
+router.get("/comments", (req, res) => {
+  res.json({ comments: comments });
+});
 
+//코멘트 상세 조회 API
+router.get("/comments/:commentsId", (req, res) => {
+  const { commentsId } = req.params;
+
+  const [detail] = comments.filter((comments) => comments.commentsId === Number(commentsId));
+  res.json({ detail })
+});
+
+const Comments = require("../schemas/comments.js");
 router.post("/comments", async (req, res) => {
     // post 메소드로 요청했을때 body에 데이터가 있었다면 있는 데이터를 객체구조분해할당을 통해 가져와라
 	const { commentsId, name, content } = req.body;
@@ -25,3 +34,5 @@ router.post("/comments", async (req, res) => {
 
   res.json({ comments: createdComments });
 });
+
+module.exports = router;
