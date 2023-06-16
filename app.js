@@ -4,16 +4,11 @@ const express = require('express')
 const app = express();
 const port = 3000;
 
-// const commentsRouter = require("./routes/comments");
-// // connect라는 변수에 require로 schemas 모듈을 가지고온다
-// const connect = require("./schemas/");
-// connect(); 
-
 const postsRouter = require("./routes/posts");
 const commentsRouter = require("./routes/comments");
+// connect라는 변수에 require로 schemas 모듈을 가지고온다
 const connect = require("./schemas/");
 connect(); 
-
 
 app.use(express.json());
 // app.use("/api", [commentsRouter])

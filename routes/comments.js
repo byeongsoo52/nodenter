@@ -5,12 +5,12 @@
 const express = require("express")
 const router = express.Router();
 
-//코멘트 목록 조회 API
+//댓글 목록 조회 API
 router.get("/comments", (req, res) => {
   res.json({ comments: comments });
 });
 
-//코멘트 상세 조회 API
+//댓글 상세 조회 API
 router.get("/comments/:commentsId", (req, res) => {
   const { commentsId } = req.params;
 
@@ -36,3 +36,29 @@ router.post("/comments", async (req, res) => {
 });
 
 module.exports = router;
+
+// 댓글 수정
+router.put("/comments/:commentsId", async (req, res) => {
+  const { commentsId } = req.params;
+  const { name } = req.body;
+  const { content } = req.body;
+
+  const existsComments = await Comments.find({ commentsId: Number(commentsId) });
+  if (existsComments.length) {
+    await Comments.updateOne({ commentsId: Number(commentsId) }, { $set: { name, content } });
+  }
+
+  res.json({ success: true });
+})
+
+// 댓글 삭제
+router.delete("/comments/:commentsId", async (req, res) => {
+  const { commentsId } = req.params;
+
+  const existsComments = await Comments.find({ commentsId });
+  if (existsComments.length > 0) {
+    await Comments.deleteOne({ commentsId });
+  }
+
+  res.json({ result: "success" });
+});
