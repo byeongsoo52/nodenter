@@ -5,60 +5,69 @@
 const express = require("express")
 const router = express.Router();
 
-//댓글 목록 조회 API
-router.get("/comments", (req, res) => {
-  res.json({ comments: comments });
+const Comment = require("../schemas/comments.js");
+const Post = require("../schemas/post.js")
+
+// 댓글 조회 API
+router.get("/posts/:postId/comments", async (req, res) => {
+  const { postId } = req.params;
+  const comments = await Comment.find({ postId }).sort({ createdAt: -1 });
+  res.json({ comments });
 });
 
-//댓글 상세 조회 API
-router.get("/comments/:commentsId", (req, res) => {
-  const { commentsId } = req.params;
+// 댓글 작성 API
+router.post("/posts/:postId/comments", async (req, res) => {
+  const postId = req.params.postId;
+  const { user, password, content } = req.body;
 
-  const [detail] = comments.filter((comments) => comments.commentsId === Number(commentsId));
-  res.json({ detail })
-});
+  const date = new Date()
+  const createdAt = date.valueOf();
 
-const Comments = require("../schemas/comments.js");
-router.post("/comments", async (req, res) => {
-    // post 메소드로 요청했을때 body에 데이터가 있었다면 있는 데이터를 객체구조분해할당을 통해 가져와라
-	const { commentsId, name, content } = req.body;
-
-  const comments = await Comments.find({ commentsId });
-  // comments 라는 변수에 데이터가 존재한다면,
-  // length 즉 array의 길이가 0보다 컸을때 통과
-  if (comments.length) {
-    return res.status(400).json({ success: false, errorMessage: "이미 있는 데이터입니다." });
+  if (!content) {
+    return res.status(400).json({ Message: "댓글을 입력해주세요." })
   }
-  // comments 데이터가 똑같이 존재하지 않는다면 데이터 생성
-  const createdComments = await Comments.create({ commentsId, name, content });
 
-  res.json({ comments: createdComments });
+  const createdComments = await Comment.create({ postId, user, password, content, createdAt });
+
+  res.json({ createdComments, Message: "댓글을 작성하였습니다." });
+});
+
+// 댓글 수정
+router.put("/posts/:postId/comments/:commentsId", async (req, res) => {
+  const { commentsId } = req.params;
+  const { password, content } = req.body;
+  const comment = await Comment.findById(commentsId);
+  console.log(comment)
+  if (comment) {
+    if (password !== comment.password) {
+      console.log(password)
+      console.log(comment.password)
+      res.status(400).json({ errorMessage: "비밀번호가 일치하지 않습니다." });
+    } else {
+      await Comment.updateOne({ _id: commentsId }, { $set: { content: content } });
+      res.status(200).json({ success: true, Message: "댓글을 수정하였습니다." });
+    }
+  } else {
+    res.status(400).json({ errorMessage: "댓글이 존재하지 않습니다." });
+  }
+});
+
+// 댓글 삭제
+router.delete("/posts/:postId/comments/:commentsId", async(req,res) => {
+  const { commentsId } = req.params;
+  const { password } = req.body;
+  const comment = await Comment.findById(commentsId);
+
+  if (comment) {
+    if (password !== comment.password) {
+      res.status(400).json({ errorMessage: "비밀번호가 일치하지 않습니다." })
+    } else {
+      await Comment.deleteOne({_id : commentsId});
+      res.status(200).json({success:true, Message: "댓글을 삭제하였습니다."});
+    } 
+  } else {
+    res.status(400).json({ errorMessage: "댓글이 존재하지 않습니다." })
+  }
 });
 
 module.exports = router;
-
-// 댓글 수정
-router.put("/comments/:commentsId", async (req, res) => {
-  const { commentsId } = req.params;
-  const { name } = req.body;
-  const { content } = req.body;
-
-  const existsComments = await Comments.find({ commentsId: Number(commentsId) });
-  if (existsComments.length) {
-    await Comments.updateOne({ commentsId: Number(commentsId) }, { $set: { name, content } });
-  }
-
-  res.json({ success: true });
-})
-
-// 댓글 삭제
-router.delete("/comments/:commentsId", async (req, res) => {
-  const { commentsId } = req.params;
-
-  const existsComments = await Comments.find({ commentsId });
-  if (existsComments.length > 0) {
-    await Comments.deleteOne({ commentsId });
-  }
-
-  res.json({ result: "success" });
-});
